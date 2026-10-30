@@ -1,0 +1,54 @@
+{
+    "model_name": "Tuned Random Forest",
+    "random_state": 42,
+    "dataset_split": {
+        "training": 7000,
+        "validation": 1500,
+        "testing": 1500
+    },
+    "cross_validation_f1": 0.7049244325469856,
+    "best_parameters": {
+        "classifier__class_weight": null,
+        "classifier__max_depth": 12,
+        "classifier__max_features": 0.8,
+        "classifier__min_samples_leaf": 4,
+        "classifier__min_samples_split": 8,
+        "classifier__n_estimators": 400
+    },
+    "validation_metrics": {
+        "accuracy": 0.9846666666666667,
+        "precision": 0.8043478260869565,
+        "recall": 0.7254901960784313,
+        "f1_score": 0.7628865979381443,
+        "roc_auc": 0.9826114020487422,
+        "pr_auc": 0.8113163420464921,
+        "confusion_matrix": [
+            [
+                1440,
+                9
+            ],
+            [
+                14,
+                37
+            ]
+        ]
+    },
+    "test_metrics": {
+        "accuracy": 0.984,
+        "precision": 0.8648648648648649,
+        "recall": 0.6274509803921569,
+        "f1_score": 0.7272727272727273,
+        "roc_auc": 0.978781850904613,
+        "pr_auc": 0.8369664749171812,
+        "confusion_matrix": [
+            [
+                1444,
+                5
+            ],
+            [
+                19,
+                32
+            ]
+        ]
+    }
+}
