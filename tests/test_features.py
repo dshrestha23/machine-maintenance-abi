@@ -2,8 +2,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from pdm.features import MaintenanceFeatureEngineer
-from pdm.model import create_model
+from src.pdm.features import MaintenanceFeatureEngineer
+from src.pdm.model import create_model
 
 
 @pytest.fixture

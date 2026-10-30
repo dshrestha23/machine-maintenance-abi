@@ -17,8 +17,8 @@ from sklearn.metrics import (
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
 
-from pdm.data import CATEGORICAL_COLUMNS, NUMERICAL_COLUMNS
-from pdm.features import MaintenanceFeatureEngineer
+from src.pdm.data import CATEGORICAL_COLUMNS, NUMERICAL_COLUMNS
+from src.pdm.features import MaintenanceFeatureEngineer
 
 RANDOM_STATE = 42
 

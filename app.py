@@ -8,7 +8,7 @@ import pandas as pd
 import streamlit as st
 from sklearn.model_selection import train_test_split
 
-from pdm.data import FEATURE_COLUMNS, TARGET_COLUMN, load_dataset
+from src.pdm.data import FEATURE_COLUMNS, TARGET_COLUMN, load_dataset
 
 ROOT = Path(__file__).resolve().parent
 ARTIFACTS = ROOT / "artifacts"

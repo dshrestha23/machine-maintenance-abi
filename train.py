@@ -10,8 +10,8 @@ from sklearn.model_selection import (
     train_test_split,
 )
 
-from pdm.data import load_dataset, split_features_target
-from pdm.model import (
+from src.pdm.data import load_dataset, split_features_target
+from src.pdm.model import (
     RANDOM_STATE,
     create_model,
     evaluate_model,

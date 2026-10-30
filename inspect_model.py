@@ -5,9 +5,9 @@ import joblib
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-from pdm.data import load_dataset, split_features_target
-from pdm.inspection import get_feature_importance, inspect_prediction
-from pdm.model import RANDOM_STATE
+from src.pdm.data import load_dataset, split_features_target
+from src.pdm.inspection import get_feature_importance, inspect_prediction
+from src.pdm.model import RANDOM_STATE
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 DATASET_PATH = PROJECT_ROOT / "data" / "ai4i2020.csv"

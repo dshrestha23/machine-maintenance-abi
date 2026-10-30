@@ -63,7 +63,7 @@ MaintenIQ/
 └── README.md
 ```
 
-This layout shows the **runtime files required by `app.py`**. Keep any additional training scripts, tests or configuration files already in your project. The `pdm` package must be included because `app.py` imports `pdm.data`.
+This layout shows the **runtime files required by `app.py`**. Keep any additional training scripts, tests or configuration files already in your project. The `pdm` package must be included because `app.py` imports `src.pdm.data`.
 
 ## Run locally
 
