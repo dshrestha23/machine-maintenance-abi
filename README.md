@@ -4,7 +4,7 @@
 
 MaintenIQ helps explore machine-failure patterns and assess operating conditions. It combines a trained Random Forest classifier with an interactive Streamlit dashboard to display failure-risk scores and maintenance decision-support information.
 
-> **Demo:** [MaintenIQ](localhost)
+> **Demo:** [MaintenIQ](https://mainteniq-abi.streamlit.app)
 
 ## Features
 

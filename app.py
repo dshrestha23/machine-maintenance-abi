@@ -1,12 +1,16 @@
+import sys
+from pathlib import Path
+
+
 import json
 import math
-from pathlib import Path
-from typing import Any
-
 import joblib
 import pandas as pd
 import streamlit as st
+from typing import Any
 from sklearn.model_selection import train_test_split
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
 from src.pdm.data import FEATURE_COLUMNS, TARGET_COLUMN, load_dataset
 
