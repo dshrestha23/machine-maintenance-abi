@@ -1,20 +1,30 @@
+
+[tool.poetry]
+package-mode = false
+
 [project]
 name = "machine-maintenance-abi"
 version = "1.0.0"
 description = "ABI for Machine Maintenance"
 requires-python = ">=3.13,<3.15"
 dependencies = [
-  "numpy>=2.3,<3", "pandas>=2.2,<3", "scikit-learn>=1.7,<1.9",
-  "joblib>=1.5,<2", "streamlit>=1.50,<2", "plotly>=6.3,<7"
+  "numpy>=2.3,<3",
+  "pandas>=2.2,<3",
+  "scikit-learn>=1.7,<1.9",
+  "joblib>=1.5,<2",
+  "streamlit>=1.50,<2",
+  "plotly>=6.3,<7"
 ]
+
 [project.optional-dependencies]
 dev = ["pytest>=8,<10", "ruff>=0.13,<1"]
+
 [tool.ruff]
 line-length = 88
+
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
+
 [build-system]
-requires = ["setuptools>=75"]
-build-backend = "setuptools.build_meta"
-[tool.setuptools.packages.find]
-where = ["src"]
+requires = ["poetry-core>=2.0"]
+build-backend = "poetry.core.masonry.api"
