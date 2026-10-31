@@ -464,6 +464,79 @@ elif page == "Live Monitoring":
             width="stretch",
         )
         st.divider()
+        st.subheader("Adaptive Monitoring Intelligence")
+        st.caption(
+            "Updates automatically from the latest 25 replay arrivals. "
+            "These are shuffled benchmark test observations, not chronological "
+            "sensor readings or evidence of real machine deterioration."
+        )
+
+        window_size = 25
+        recent = readings[-window_size:]
+        recent_count = len(recent)
+        recent_high = sum(item["Priority"] == "High" for item in recent)
+        recent_share = recent_high / recent_count
+
+        # Transparent demonstration thresholds, not learned or safety-validated.
+        # Wait for 10 observations to avoid strong claims from tiny batches.
+        if recent_count < 10:
+            alert_level = "Collecting data"
+            advisory = (
+                "Process at least 10 replay observations to establish a "
+                "provisional monitoring status."
+            )
+        elif recent_share >= 0.25:
+            alert_level = "Critical"
+            advisory = (
+                "A high proportion of recent replay arrivals are flagged. "
+                "Prioritise reviewing their individual risk assessments and "
+                "qualified inspection guidance."
+            )
+        elif recent_share >= 0.10:
+            alert_level = "Elevated"
+            advisory = (
+                "Several recent replay arrivals are flagged as high risk. "
+                "Review these observations and consider their priority "
+                "in the next shift report."
+            )
+        else:
+            alert_level = "Normal"
+            advisory = (
+                "Few recent replay arrivals are flagged as high risk. "
+                "Continue routine monitoring and review any individual alerts."
+            )
+
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Recent replay arrivals", f"{recent_count}/{window_size}")
+        c2.metric("Recent high-risk share", f"{recent_share:.1%}")
+        c3.metric("Adaptive alert level", alert_level)
+        st.progress(recent_share)
+
+        if alert_level == "Critical":
+            st.error(f"**Adaptive advisory:** {advisory}")
+        elif alert_level == "Elevated":
+            st.warning(f"**Adaptive advisory:** {advisory}")
+        else:
+            st.info(f"**Adaptive advisory:** {advisory}")
+
+        if len(readings) >= 50:
+            previous = readings[-50:-25]
+            previous_share = sum(
+                item["Priority"] == "High" for item in previous
+            ) / len(previous)
+            change = (recent_share - previous_share) * 100
+            st.caption(
+                f"Compared with the preceding 25 replay arrivals: "
+                f"{change:+.1f} percentage points in high-risk share. "
+                "This compares replay batches, not real time periods."
+            )
+        st.caption(
+            "Alert levels use prototype rules: Normal <10%, Elevated 10–<25%, "
+            "Critical ≥25% high-risk arrivals; at least 10 arrivals required. "
+            "These are not validated industrial safety thresholds."
+        )
+
+        st.divider()
         st.subheader("Shift Intelligence")
         if st.button(
             "Generate Shift Report",
