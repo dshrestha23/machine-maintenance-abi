@@ -599,8 +599,268 @@ elif page == "Risk Assessment":
             columns=list(FEATURE_COLUMNS),
         )
         probability = predict_probability(sample)
+        st.session_state["planner_assessment"] = {
+            "record": sample.iloc[0].to_dict(),
+            "probability": float(probability),
+        }
+
+    # Render the saved assessment on every Streamlit rerun, including
+    # reruns triggered by the adaptive planner's select boxes.
+    assessment = st.session_state.get("planner_assessment")
+    if assessment is not None:
         st.divider()
-        assess_record(sample.iloc[0], probability, "Manual assessment")
+        assess_record(
+            pd.Series(assessment["record"]),
+            assessment["probability"],
+            "Manual assessment",
+        )
+        st.session_state["planner_prediction"] = assessment["probability"]
+
+    if assessment is not None:
+        st.divider()
+        st.subheader("Adaptive Maintenance Planner")
+
+        st.caption(
+            "Context-aware, rule-based maintenance guidance. "
+            "Business inputs change the recommendation, "
+            "not the Random Forest prediction."
+        )
+
+        criticality = st.selectbox(
+            "Production criticality",
+            ["Low", "Medium", "High"],
+            index=1,
+            key="planner_criticality",
+        )
+
+        col_tech, col_parts = st.columns(2)
+
+        with col_tech:
+            technician = st.selectbox(
+                "Qualified technician",
+                ["Available", "Unavailable"],
+                key="planner_technician",
+            )
+
+        with col_parts:
+            parts = st.selectbox(
+                "Required spare parts",
+                ["Available", "Unavailable"],
+                key="planner_parts",
+            )
+
+        risk = st.session_state["planner_prediction"]
+
+        if risk >= HIGH_THRESHOLD:
+            priority = "High"
+
+            if technician == "Unavailable":
+                recommendation = (
+                    "Escalate urgently to the maintenance supervisor "
+                    "and arrange qualified technical support. "
+                    "Follow approved site safety procedures."
+                )
+            elif parts == "Unavailable":
+                recommendation = (
+                    "Arrange a qualified inspection, escalate the "
+                    "parts shortage, and assess safe operating status "
+                    "under site procedures."
+                )
+            elif criticality == "High":
+                recommendation = (
+                    "Prioritise qualified inspection of this "
+                    "production-critical asset and review whether "
+                    "continued operation is safe."
+                )
+            else:
+                recommendation = (
+                    "Arrange prompt qualified inspection and "
+                    "coordinate maintenance with production."
+                )
+
+        elif risk >= REVIEW_THRESHOLD:
+            priority = "Review"
+
+            if criticality == "High":
+                recommendation = (
+                    "Prioritise a condition review for this "
+                    "production-critical asset and plan an inspection."
+                )
+            elif technician == "Unavailable":
+                recommendation = (
+                    "Record the review requirement and schedule "
+                    "qualified inspection when support is available."
+                )
+            else:
+                recommendation = (
+                    "Review operating conditions and schedule "
+                    "an inspection according to maintenance priorities."
+                )
+
+        else:
+            priority = "Routine"
+            recommendation = (
+                "Continue routine monitoring and planned maintenance. "
+                "Reassess if operating conditions change."
+            )
+
+        st.info(
+            f"**{priority} risk — Adaptive recommendation:** "
+            f"{recommendation}"
+        )
+
+        st.caption(
+            "Decision-support guidance only. Not a validated "
+            "industrial safety rule or automated maintenance instruction."
+        )
+
+        # Feedback-driven policy learning: session-only, no model retraining.
+        st.divider()
+        st.subheader("Maintenance Learning & Optimisation")
+        st.caption(
+            "Prototype feedback loop. Record outcomes for maintenance actions, "
+            "then compare observed results in matching risk and operating contexts. "
+            "Use simulated outcomes only for demonstration; these are not factory results."
+        )
+
+        if "maintenance_feedback" not in st.session_state:
+            st.session_state["maintenance_feedback"] = []
+
+        # Only compare two inspection-planning approaches where qualified staff
+        # and required parts are available. Never learn around safety escalation.
+        eligible = (
+            priority in ("High", "Review")
+            and technician == "Available"
+            and parts == "Available"
+        )
+        options = (
+            "Prioritised qualified inspection",
+            "Coordinated qualified inspection",
+        )
+        context = (priority, criticality, technician, parts)
+        history = st.session_state["maintenance_feedback"]
+        matching = [item for item in history if item["context"] == context]
+
+        total_records = len(history)
+        successful_records = sum(item["successful"] for item in history)
+        m1, m2, m3 = st.columns(3)
+        m1.metric("Feedback records (this session)", total_records)
+        m2.metric("Successful outcomes", successful_records)
+        m3.metric(
+            "Observed success rate",
+            f"{successful_records / total_records:.0%}" if total_records else "—",
+        )
+
+        if not eligible:
+            st.warning(
+                "Learning-based action ranking is unavailable in this context. "
+                "Follow the risk-based guidance above. Comparative inspection "
+                "planning requires Review/High risk, an available qualified "
+                "technician, and available parts."
+            )
+        else:
+            st.write(
+                f"**Matching context:** {priority} risk · {criticality} production "
+                "criticality · technician and parts available"
+            )
+            stats = {}
+            for option in options:
+                records = [item for item in matching if item["action"] == option]
+                successes = sum(item["successful"] for item in records)
+                count = len(records)
+                # Laplace smoothing reduces extreme estimates from tiny samples.
+                stats[option] = (count, successes, (successes + 1) / (count + 2))
+
+            # Require evidence for both options before allowing feedback to
+            # change the preferred approach. Default is a conservative heuristic.
+            evidence_ready = all(stats[option][0] >= 2 for option in options)
+            preferred = options[0]
+            if evidence_ready and stats[options[1]][2] > stats[options[0]][2]:
+                preferred = options[1]
+
+            for option in options:
+                count, successes, score = stats[option]
+                label = " (currently preferred)" if option == preferred else ""
+                st.write(
+                    f"**{option}{label}** — {successes}/{count} reported successful; "
+                    f"smoothed outcome score {score:.0%}"
+                )
+
+            if evidence_ready:
+                st.success(
+                    f"**Feedback-informed preference:** {preferred}. "
+                    "Ranking is based on the outcomes recorded for this exact context."
+                )
+            else:
+                st.info(
+                    f"**Initial preference:** {preferred}. "
+                    "Record at least two outcomes for EACH approach in this "
+                    "context to enable feedback-informed ranking."
+                )
+
+            with st.form("maintenance_feedback_form", clear_on_submit=False):
+                action = st.selectbox(
+                    "Maintenance approach taken",
+                    list(options),
+                    key="learning_action",
+                )
+                outcome = st.selectbox(
+                    "Reported follow-up outcome",
+                    ["Issue resolved", "Issue not resolved"],
+                    key="learning_outcome",
+                )
+                confirmed_demo = st.checkbox(
+                    "This is simulated feedback entered for the prototype demo",
+                    key="learning_demo_confirmation",
+                )
+                save_feedback = st.form_submit_button(
+                    "Record feedback", type="primary", width="stretch"
+                )
+            if save_feedback:
+                if not confirmed_demo:
+                    st.error("Confirm that the feedback is simulated before saving.")
+                else:
+                    st.session_state["maintenance_feedback"].append(
+                        {
+                            "context": context,
+                            "action": action,
+                            "successful": outcome == "Issue resolved",
+                            "outcome": outcome,
+                            "risk_probability": risk,
+                            "source": "Simulated demo entry",
+                        }
+                    )
+                    st.rerun()
+
+        with st.expander("Feedback history (this session)"):
+            if history:
+                rows = [
+                    {
+                        "Risk": item["context"][0],
+                        "Criticality": item["context"][1],
+                        "Technician": item["context"][2],
+                        "Parts": item["context"][3],
+                        "Action": item["action"],
+                        "Outcome": item["outcome"],
+                        "Source": item["source"],
+                    }
+                    for item in history
+                ]
+                st.dataframe(pd.DataFrame(rows).iloc[::-1], hide_index=True, width="stretch")
+            else:
+                st.write("No feedback has been recorded in this session.")
+
+        if st.button("Clear demo feedback", key="clear_maintenance_feedback"):
+            st.session_state["maintenance_feedback"] = []
+            st.rerun()
+
+        st.caption(
+            "Learning updates the inspection-action ranking, not the Random "
+            "Forest failure probability. Feedback is stored in this browser "
+            "session only and is lost when the session resets. Small samples, "
+            "unverified outcomes, and selection bias limit the ranking's reliability. "
+            "This is not a validated maintenance optimisation or safety system."
+        )
 
 elif page == "Model Intelligence":
     st.subheader("Model Performance")
